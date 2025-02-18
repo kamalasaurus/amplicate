@@ -1,0 +1,8 @@
+[package]
+name = "amplicate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bio = "0.41.0"
+paraseq = "0.1.2"
