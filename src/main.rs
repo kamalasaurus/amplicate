@@ -1,19 +1,32 @@
 use std::env::args;
-use bio::io::fasta;
+use std::fs::File;
+use paraseq::{
+    fasta,
+    fastx::Record,
+    parallel::{ParallelProcessor, ParallelReader, ProcessError}
+};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input = args().nth(1).unwrap();
-    let reader = fasta::Reader::from_file(input).unwrap();
-    reader
-        .records()
-        .try_for_each(|record| -> Result<(), Box<dyn std::error::Error>> {
-            let record = record.map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-            println!("Record ID: {}", record.id());
-            println!("Description: {:?}", record.desc());
-            println!("Sequence: {}", String::from_utf8_lossy(record.seq()));
-            println!("Length: {}", record.seq().len());
-            Ok(())
-        })?;
+#[derive(Clone, Default)]
+struct MyProcessor {
+    // Add fields here
+}
 
+impl ParallelProcessor for MyProcessor {
+    fn process_record<R: Record>(&mut self, record: R) -> Result<(), ProcessError> {
+        // Process record in parallel
+        println!("Processing record: {}", record.id_str());
+        println!("Sequence: {}", record.seq_str());
+        println!("Length: {}", record.seq().len());
+        Ok(())
+    }
+}
+
+fn main() -> Result<(), ProcessError> {
+    let input = args().nth(1).expect("No input file provided.");
+    let file = File::open(input)?;
+    let reader = fasta::Reader::new(file);
+    let processor = MyProcessor::default();
+    let num_threads = 8;
+    reader.process_parallel(processor, num_threads)?;
     Ok(())
 }
