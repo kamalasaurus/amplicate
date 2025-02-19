@@ -8,6 +8,27 @@ use paraseq::{
 };
 use num_cpus;
 
+// Helper function: finds needle in haystack
+// using case insensitive matching, with 'N' as wildcard.
+fn find_with_wildcard(haystack: &str, needle: &str) -> Option<usize> {
+    let haystack = haystack.as_bytes();
+    let needle = needle.as_bytes();
+    if needle.len() > haystack.len() { return None; }
+    for i in 0..=haystack.len() - needle.len() {
+        let mut found = true;
+        for j in 0..needle.len() {
+            let h = haystack[i + j].to_ascii_uppercase();
+            let n = needle[j].to_ascii_uppercase();
+            if h != n && h != b'N' && n != b'N' {
+                found = false;
+                break;
+            }
+        }
+        if found { return Some(i); }
+    }
+    None
+}
+
 // Update MyProcessor to store shared primers in a HashMap.
 #[derive(Clone)]
 struct MyProcessor {
@@ -30,8 +51,8 @@ impl ParallelProcessor for MyProcessor {
             for j in (i + 1)..primer_vec.len() {
                 let (id1, p1) = primer_vec[i];
                 let (id2, p2) = primer_vec[j];
-                if let Some(pos1) = seq.find(p1) {
-                    if let Some(pos2) = seq.find(p2) {
+                if let Some(pos1) = find_with_wildcard(seq, p1) {
+                    if let Some(pos2) = find_with_wildcard(seq, p2) {
                         // Check non-overlapping: p1 occurs before p2.
                         if pos1 + p1.len() <= pos2 {
                             let amplicon = &seq[(pos1 + p1.len())..pos2];
