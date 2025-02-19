@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 paraseq = "0.1.2"
+num_cpus = "1.16.0"
