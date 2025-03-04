@@ -49,13 +49,11 @@ impl ParallelProcessor for MyProcessor {
     fn process_record<R: Record>(&mut self, record: R) -> Result<(), ProcessError> {
         let record_id = record.id_str();
         let seq = record.seq_str();
-        // Convert HashMap to vector for pair iteration.
         let primer_vec: Vec<(&String, &String)> = self.primers.iter().collect();
         for i in 0..primer_vec.len() {
             for j in (i + 1)..primer_vec.len() {
                 let (id1, p1) = primer_vec[i];
                 let (id2, p2) = primer_vec[j];
-                // If a prefix_len is provided, only compare primers with matching first N characters.
                 if let Some(n) = self.prefix_len {
                     if id1.len() < n || id2.len() < n || &id1[..n] != &id2[..n] {
                         continue;
@@ -63,17 +61,15 @@ impl ParallelProcessor for MyProcessor {
                 }
                 if let Some(pos1) = find_with_wildcard(seq, p1) {
                     if let Some(pos2) = find_with_wildcard(seq, p2) {
-                        // Check non-overlapping: p1 occurs before p2.
-                        if pos1 + p1.len() <= pos2 {
-                            let amplicon = &seq[(pos1 + p1.len())..pos2];
-                            println!("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", 
-                                record_id, id1, p1, id2, p2, amplicon, amplicon.len(), self.prefix_len.unwrap_or(0));
-                        }
-                        // Alternatively: p2 occurs before p1.
-                        else if pos2 + p2.len() <= pos1 {
-                            let amplicon = &seq[(pos2 + p2.len())..pos1];
-                            println!("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", 
-                                record_id, id2, p2, id1, p1, amplicon, amplicon.len(), self.prefix_len.unwrap_or(0));
+                        if pos1 <= pos2 {
+                            // Include p1 and p2 in the amplicon.
+                            let amplicon = &seq[pos1..(pos2 + p2.len())];
+                            println!("{}\t{}\t{}\t{}\t{}\t{}\t{}", 
+                                record_id, id1, p1, id2, p2, amplicon, amplicon.len());
+                        } else {
+                            let amplicon = &seq[pos2..(pos1 + p1.len())];
+                            println!("{}\t{}\t{}\t{}\t{}\t{}\t{}", 
+                                record_id, id2, p2, id1, p1, amplicon, amplicon.len());
                         }
                     }
                 }
