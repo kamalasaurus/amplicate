@@ -72,7 +72,7 @@ impl ParallelProcessor for MyProcessor {
                         // Alternatively: p2 occurs before p1.
                         else if pos2 + p2.len() <= pos1 {
                             let amplicon = &seq[(pos2 + p2.len())..pos1];
-                            println!("{}\t{}\t{}\t{}\\t{}\t{}\t{}\t{}", 
+                            println!("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", 
                                 record_id, id2, p2, id1, p1, amplicon, amplicon.len(), self.prefix_len.unwrap_or(0));
                         }
                     }
